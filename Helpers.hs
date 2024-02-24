@@ -1,5 +1,7 @@
 module Helpers where
 
+import Constants (dbPath)
+import DataS (insertGroup)
 import System.Exit (exitSuccess)
 import Types (Group (..), State (..), Task (..))
 import Utils (deleteListAtIndex, getUserAction, getUserInput, updateListAtIndex)
@@ -8,7 +10,7 @@ import Utils (deleteListAtIndex, getUserAction, getUserInput, updateListAtIndex)
 
 createGroup :: State -> IO State
 createGroup (State groups tasks) = do
-  putStrLn "\n\nCreating a new group"
+  putStrLn "Creating a new group"
   putStrLn "-------------------"
   name <- getUserInput "Enter the name of the group: "
   if name `elem` map (\(Group name) -> name) groups
@@ -16,6 +18,7 @@ createGroup (State groups tasks) = do
       putStrLn "Group already exists. Please choose a different name."
       createGroup (State groups tasks)
     else do
+      insertGroup dbPath name
       putStrLn "Group created successfully!\n\n"
       return $ State (groups ++ [Group name]) tasks
 
@@ -23,10 +26,10 @@ createGroup (State groups tasks) = do
 
 createTask :: State -> IO State
 createTask (State [] tasks) = do
-  putStrLn "\nNo groups found. Please create a group first.\n"
+  putStrLn "No groups found. Please create a group first.\n"
   return (State [] tasks)
 createTask (State groups tasks) = do
-  putStrLn "\n\nCreating a new task"
+  putStrLn "Creating a new task"
   putStrLn "-------------------"
 
   title <- getUserInput "Enter the title of the task: "
@@ -45,7 +48,7 @@ createTask (State groups tasks) = do
 
 viewAllTasks :: State -> IO State
 viewAllTasks (State groups []) = do
-  putStrLn "\n\nViewing all tasks"
+  putStrLn "Viewing all tasks"
   putStrLn "------------------"
   putStrLn "No tasks found.\n"
   let prompt = "What do you want to do?"
@@ -55,7 +58,7 @@ viewAllTasks (State groups []) = do
     1 -> return (State groups [])
     2 -> exitSuccess
 viewAllTasks state = do
-  putStrLn "\n\nViewing all tasks"
+  putStrLn "Viewing all tasks"
   putStrLn "------------------"
   let prompt = "Which task do you want to view?"
   let actions = map title (tasks state) ++ ["Back", "Exit"]
@@ -72,7 +75,7 @@ viewAllTasks state = do
 
 viewTask :: State -> Int -> IO State
 viewTask state index = do
-  putStrLn "\n\nViewing a task"
+  putStrLn "Viewing a task"
   putStrLn "----------------"
   let task = tasks state !! (index - 1)
   print task
@@ -98,7 +101,7 @@ viewTask state index = do
 
 changeTitle :: State -> Task -> Int -> IO State
 changeTitle state task index = do
-  putStrLn "\n\nChanging the title of the task"
+  putStrLn "Changing the title of the task"
   putStrLn "------------------------------"
   newTitle <- getUserInput "Enter the new title of the task: "
   let newTask = Task newTitle (description task) (group task)
@@ -109,7 +112,7 @@ changeTitle state task index = do
 
 changeDescription :: State -> Task -> Int -> IO State
 changeDescription state task index = do
-  putStrLn "\n\nChanging the description of the task"
+  putStrLn "Changing the description of the task"
   putStrLn "------------------------------"
   newDescription <- getUserInput "Enter the new description of the task: "
   let newTask = Task (title task) newDescription (group task)
@@ -120,7 +123,7 @@ changeDescription state task index = do
 
 changeGroup :: State -> Task -> Int -> IO State
 changeGroup state task index = do
-  putStrLn "\n\nChanging the group of the task"
+  putStrLn "Changing the group of the task"
   putStrLn "------------------------------"
   let prompt = "Which group do you want to move the task to?"
   let groupNames = map (\(Group name) -> name) (groups state)
@@ -134,7 +137,7 @@ changeGroup state task index = do
 
 deleteTask :: State -> Int -> IO State
 deleteTask state index = do
-  putStrLn "\n\nDeleting a task"
+  putStrLn "Deleting a task"
   putStrLn "----------------"
   putStrLn "Task deleted successfully!\n"
   let newTasks = deleteListAtIndex (tasks state) index
@@ -144,10 +147,10 @@ deleteTask state index = do
 
 viewAllGroups :: State -> IO State
 viewAllGroups (State [] tasks) = do
-  putStrLn "\nNo groups found. Please create a group first.\n"
+  putStrLn "No groups found. Please create a group first.\n"
   return (State [] tasks)
 viewAllGroups state = do
-  putStrLn "\n\nViewing all tasks by group"
+  putStrLn "Viewing all tasks by group"
   putStrLn "---------------------------"
   let prompt = "Which group do you want to view?"
   let groupNames = map (\(Group name) -> name) (groups state)
@@ -158,7 +161,7 @@ viewAllGroups state = do
 
 viewAllTasksByGroup :: State -> Group -> IO State
 viewAllTasksByGroup state selectedGroup = do
-  putStrLn $ "\n\nViewing all tasks in " ++ show selectedGroup ++ " group"
+  putStrLn $ "Viewing all tasks in " ++ show selectedGroup ++ " group"
   putStrLn "---------------------------"
   let indexedTasks = zip [1 ..] (tasks state)
   let filteredTasks = filter (\(index, task) -> group task == selectedGroup) indexedTasks
