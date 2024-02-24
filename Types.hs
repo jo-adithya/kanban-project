@@ -1,23 +1,18 @@
 module Types where
 
-newtype State = State [Group]
+data State = State {groups :: [Group], tasks :: [Task]}
   deriving (Show, Eq)
 
-data Group = Group {name :: String, tasks :: [Task]}
+newtype Group = Group String
   deriving (Eq)
 
 instance Show Group where
   show :: Group -> String
-  show (Group name tasks) = name ++ " (" ++ show (length tasks) ++ " tasks)" ++ "\n" ++ helper 1 tasks
-   where
-    helper :: Int -> [Task] -> String
-    helper _ [] = ""
-    helper index (task : rest) =
-      "  (" ++ show index ++ ") " ++ title task ++ "\n" ++ helper (index + 1) rest
+  show (Group name) = name
 
-data Task = Task {title :: String, description :: String}
+data Task = Task {title :: String, description :: String, group :: Group}
   deriving (Eq)
 
 instance Show Task where
   show :: Task -> String
-  show task = "Title: " ++ title task ++ "Description:\n" ++ description task
+  show task = "Group: " ++ show (group task) ++ "\n" ++ "Title: " ++ title task ++ "\nDescription:\n" ++ description task

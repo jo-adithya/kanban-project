@@ -3,18 +3,11 @@ module Utils where
 import Text.Read (readMaybe)
 import Types
 
-printGroups :: [Group] -> IO ()
-printGroups groups = printGroupsHelper 1 groups
- where
-  printGroupsHelper :: Int -> [Group] -> IO ()
-  printGroupsHelper _ [] = return ()
-  printGroupsHelper index groups = do
-    let group = head groups
-    putStrLn $ "  (" ++ show index ++ ") " ++ name group
-    printGroupsHelper (index + 1) (tail groups)
-
 updateListAtIndex :: [a] -> Int -> a -> [a]
 updateListAtIndex list index newElement = take (index - 1) list ++ [newElement] ++ drop index list
+
+deleteListAtIndex :: [a] -> Int -> [a]
+deleteListAtIndex list index = take (index - 1) list ++ drop index list
 
 getUserAction :: String -> [String] -> IO Int
 getUserAction prompt actions = do
