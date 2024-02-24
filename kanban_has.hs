@@ -1,18 +1,4 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-
-import Database.Persist.TH
-import Control.Monad.IO.Class (liftIO)
-import Database.Persist
-import Database.Persist.Sqlite
-
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person
-    name String
-    age Int Maybe
-    deriving Show
-|]
+import Database.HDBC
+import Database.HDBC.Sqlite3 (connectSqlite3) 
+import Database.HDBC.PostgreSQL (connectPostgreSQL) 
+import Database.HDBC.MySQL (connectMySQL, defaultMySQLConnectInfo) 
