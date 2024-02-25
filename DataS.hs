@@ -1,7 +1,7 @@
 module DataS where
 
 import Database.HDBC
-import Database.HDBC.Sqlite3 (connectSqlite3) 
+import Database.HDBC.Sqlite3 (connectSqlite3)
 
 -- Function to connect to the database and initialize the schema
 initDB :: FilePath -> IO ()
@@ -70,7 +70,7 @@ updateTaskGroupD dbPath taskId newGroupId = do
 deleteGroupD :: FilePath -> Int -> IO ()
 deleteGroupD dbPath groupId = do
     conn <- connectSqlite3 dbPath
-    _ <- run conn "DELETE FROM tasks_table WHERE group_id = ?" [toSql groupId] 
+    _ <- run conn "DELETE FROM tasks_table WHERE group_id = ?" [toSql groupId]
     _ <- run conn "DELETE FROM group_table WHERE id = ?" [toSql groupId]
     commit conn
     disconnect conn
@@ -92,7 +92,7 @@ fetchGroupsD dbPath = do
     return $ map (\[sqlId, sqlName] -> (fromSql sqlId, fromSql sqlName)) res
 
 -- Fetches a group's ID by its name
-fetchGroupIdByNameD :: FilePath -> String -> IO (Int)
+fetchGroupIdByNameD :: FilePath -> String -> IO (Maybe Int)
 fetchGroupIdByNameD dbPath groupName = do
     conn <- connectSqlite3 dbPath
     res <- quickQuery' conn "SELECT id FROM group_table WHERE group_name = ? LIMIT 1" [toSql groupName]
@@ -115,5 +115,5 @@ fetchTaskIdByNameD dbPath taskName = do
     res <- quickQuery' conn "SELECT id FROM tasks_table WHERE task_name = ? LIMIT 1" [toSql taskName]
     disconnect conn
     return $ case res of
-        [[sqlId]] -> Just (fromSql sqlId)  
-        _ -> Nothing  
+        [[sqlId]] -> Just (fromSql sqlId)
+        _ -> Nothing

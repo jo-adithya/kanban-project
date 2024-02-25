@@ -1,7 +1,7 @@
-module Helpers where
+module Helpers2 where
 
 import Constants (dbPath)
-import DataS (insertGroup)
+import DataS (deleteGroupD, deleteTaskD, fetchGroupIdByNameD, fetchTaskIdByNameD, insertGroupD, insertTaskD, updateTaskDescriptionD, updateTaskGroupD, updateTaskTitleD)
 import System.Exit (exitSuccess)
 import Types (Group (..), State (..), Task (..))
 import Utils (deleteListAtIndex, getUserAction, getUserInput, updateListAtIndex)
@@ -24,8 +24,6 @@ createGroup (State groups tasks) = do
 
 --------------- Create task ---------------
 
-import DataS (insertTask, fetchGroupIdByName)
-
 createTask :: State -> IO State
 createTask (State [] tasks) = do
   putStrLn "No groups found. Please create a group first.\n"
@@ -41,12 +39,15 @@ createTask (State groups tasks) = do
   let groupNames = map (\(Group name) -> name) groups
   groupIndex <- getUserAction prompt groupNames
   let group = groups !! (groupIndex - 1)
-  groupId <- fetchGroupIdByName dbPath (show group)
-  insertTaskD dbPath title description groupId
+  groupId <- fetchGroupIdByNameD dbPath (show group)
 
+  case groupId :: Maybe Int of
+    Just groupId -> do
+      insertTaskD dbPath title description groupId
+
+  let newTask = Task title description group
   putStrLn "Task created successfully!\n\n"
   return $ State groups (tasks ++ [newTask]) -- This line might be replaced with updated state fetch logic
-
 
 --------------- View all tasks ---------------
 
@@ -110,16 +111,15 @@ changeTitle state task index = do
   newTitle <- getUserInput "Enter the new title of the task: "
 
   taskIdMaybe <- fetchTaskIdByNameD dbPath (title task)
-  
+
   case taskIdMaybe of
     Just taskId -> do
       updateTaskTitleD dbPath taskId newTitle
-      
+
       let newTask = Task newTitle (description task) (group task)
       let newTasks = updateListAtIndex (tasks state) index newTask
       putStrLn "Title changed successfully!\n"
       return $ State (groups state) newTasks
-      
     Nothing -> do
       putStrLn "Failed to find the task in the database."
       return state
@@ -133,16 +133,15 @@ changeDescription state task index = do
   newDescription <- getUserInput "Enter the new description of the task: "
 
   taskIdMaybe <- fetchTaskIdByNameD dbPath (title task)
-  
+
   case taskIdMaybe of
     Just taskId -> do
       updateTaskDescriptionD dbPath taskId newDescription
-      
+
       let newTask = Task (title task) newDescription (group task)
       let newTasks = updateListAtIndex (tasks state) index newTask
       putStrLn "Description changed successfully!\n"
       return $ State (groups state) newTasks
-      
     Nothing -> do
       putStrLn "Failed to find the task in the database."
       return state
@@ -171,11 +170,9 @@ changeGroup state task index = do
           let newTasks = updateListAtIndex (tasks state) index newTask
           putStrLn "Group changed successfully!\n"
           return $ State (groups state) newTasks
-
         Nothing -> do
           putStrLn "Failed to find the task in the database."
           return state
-
     Nothing -> do
       putStrLn "Failed to find the new group in the database."
       return state
@@ -186,12 +183,13 @@ deleteTask :: State -> Int -> IO State
 deleteTask state index = do
   putStrLn "Deleting a task"
   putStrLn "----------------"
-  
-  let taskToDelete = tasks state !! (index - 1)
-  let taskId = fetchTaskIdByNameD dbPath (title task)
 
-  deleteTaskD dbPath taskId
-  
+  let taskToDelete = tasks state !! (index - 1)
+  taskId <- fetchTaskIdByNameD dbPath (title taskToDelete)
+
+  case taskId :: Maybe Int of
+    Just taskId -> deleteTaskD dbPath taskId
+
   let newTasks = deleteListAtIndex (tasks state) index
   putStrLn "Task deleted successfully!\n"
   return $ State (groups state) newTasks
@@ -208,7 +206,7 @@ deleteGroup state index = do
   case groupIdMaybe of
     Just groupId -> do
       deleteGroupD dbPath groupId
-    
+
       let newGroups = deleteListAtIndex (groups state) index
       putStrLn "Group and its tasks deleted successfully!\n"
       return $ State newGroups (filter (\task -> group task /= Group groupName) (tasks state))

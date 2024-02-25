@@ -1,8 +1,8 @@
 module Kanban where
 
 import Constants (dbPath)
-import DataS (fetchGroups, fetchTasks, initDB)
-import Helpers (createGroup, createTask, viewAllGroups, viewAllTasks)
+import DataS (fetchGroupsD, fetchTasksD, initDB)
+import Helpers2 (createGroup, createTask, viewAllGroups, viewAllTasks)
 import Text.Read (readMaybe)
 import Types (Group (Group), State (State), Task (Task))
 import Utils (getUserAction)
@@ -31,8 +31,8 @@ main = do
   initDB dbPath
 
   -- Load the state from database
-  sqlGroups <- fetchGroups dbPath
-  sqlTasks <- fetchTasks dbPath
+  sqlGroups <- fetchGroupsD dbPath
+  sqlTasks <- fetchTasksD dbPath
 
   -- Convert the SQL result to State
   let groups = map (\(id, name) -> Group name) sqlGroups
