@@ -28,6 +28,39 @@ insertTask dbPath taskName taskDescription groupId = do
     commit conn
     disconnect conn
 
+-- Update a group into the database
+updateGroup :: FilePath -> Int -> String -> IO ()
+updateGroup dbPath groupId newName = do
+    conn <- connectSqlite3 dbPath
+    run conn "UPDATE group_table SET group_name = ? WHERE id = ?" [toSql newName, toSql groupId]
+    commit conn
+    disconnect conn
+
+-- Update a task into the database
+updateTask :: FilePath -> Int -> String -> String -> Int -> IO ()
+updateTask dbPath taskId newTaskName newDescription newGroupId = do
+    conn <- connectSqlite3 dbPath
+    run conn "UPDATE tasks_table SET task_name = ?, task_description = ?, group_id = ? WHERE id = ?" [toSql newTaskName, toSql newDescription, toSql newGroupId, toSql taskId]
+    commit conn
+    disconnect conn
+
+-- Deleting a group in the database
+deleteGroup :: FilePath -> Int -> IO ()
+deleteGroup dbPath groupId = do
+    conn <- connectSqlite3 dbPath
+    run conn "DELETE FROM group_table WHERE id = ?" [toSql groupId]
+    -- Optionally, delete tasks associated with this group or handle them differently
+    commit conn
+    disconnect conn
+
+-- Delete a task in the database
+deleteTask :: FilePath -> Int -> IO ()
+deleteTask dbPath taskId = do
+    conn <- connectSqlite3 dbPath
+    run conn "DELETE FROM tasks_table WHERE id = ?" [toSql taskId]
+    commit conn
+    disconnect conn
+
 -- Fetch all groups
 fetchGroups :: FilePath -> IO [(Int, String)]
 fetchGroups dbPath = do
