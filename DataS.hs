@@ -13,66 +13,107 @@ initDB dbPath = do
     disconnect conn
 
 -- Insert a group into the database
-insertGroup :: FilePath -> String -> IO ()
-insertGroup dbPath groupName = do
+insertGroupD :: FilePath -> String -> IO ()
+insertGroupD dbPath groupName = do
     conn <- connectSqlite3 dbPath
     run conn "INSERT INTO group_table (group_name) VALUES (?)" [toSql groupName]
     commit conn
     disconnect conn
 
 -- Insert a task into the database
-insertTask :: FilePath -> String -> String -> Int -> IO ()
-insertTask dbPath taskName taskDescription groupId = do
+insertTaskD :: FilePath -> String -> String -> Int -> IO ()
+insertTaskD dbPath taskName taskDescription groupId = do
     conn <- connectSqlite3 dbPath
     run conn "INSERT INTO tasks_table (task_name, task_description, group_id) VALUES (?, ?, ?)" [toSql taskName, toSql taskDescription, toSql groupId]
     commit conn
     disconnect conn
 
 -- Update a group into the database
-updateGroup :: FilePath -> Int -> String -> IO ()
-updateGroup dbPath groupId newName = do
+updateGroupD :: FilePath -> Int -> String -> IO ()
+updateGroupD dbPath groupId newName = do
     conn <- connectSqlite3 dbPath
     run conn "UPDATE group_table SET group_name = ? WHERE id = ?" [toSql newName, toSql groupId]
     commit conn
     disconnect conn
 
 -- Update a task into the database
-updateTask :: FilePath -> Int -> String -> String -> Int -> IO ()
-updateTask dbPath taskId newTaskName newDescription newGroupId = do
+updateTaskD :: FilePath -> Int -> String -> String -> Int -> IO ()
+updateTaskD dbPath taskId newTaskName newDescription newGroupId = do
     conn <- connectSqlite3 dbPath
     run conn "UPDATE tasks_table SET task_name = ?, task_description = ?, group_id = ? WHERE id = ?" [toSql newTaskName, toSql newDescription, toSql newGroupId, toSql taskId]
     commit conn
     disconnect conn
 
--- Deleting a group in the database
-deleteGroup :: FilePath -> Int -> IO ()
-deleteGroup dbPath groupId = do
+updateTaskTitleD :: FilePath -> Int -> String -> IO ()
+updateTaskTitleD dbPath taskId newTitle = do
     conn <- connectSqlite3 dbPath
-    run conn "DELETE FROM group_table WHERE id = ?" [toSql groupId]
-    -- Optionally, delete tasks associated with this group or handle them differently
+    run conn "UPDATE tasks_table SET task_name = ? WHERE id = ?" [toSql newTitle, toSql taskId]
+    commit conn
+    disconnect conn
+
+updateTaskDescriptionD :: FilePath -> Int -> String -> IO ()
+updateTaskDescriptionD dbPath taskId newDescription = do
+    conn <- connectSqlite3 dbPath
+    run conn "UPDATE tasks_table SET task_description = ? WHERE id = ?" [toSql newDescription, toSql taskId]
+    commit conn
+    disconnect conn
+
+-- Updates the group of a specific task in the database
+updateTaskGroupD :: FilePath -> Int -> Int -> IO ()
+updateTaskGroupD dbPath taskId newGroupId = do
+    conn <- connectSqlite3 dbPath
+    run conn "UPDATE tasks_table SET group_id = ? WHERE id = ?" [toSql newGroupId, toSql taskId]
+    commit conn
+    disconnect conn
+
+-- Deleting a group in the database
+deleteGroupD :: FilePath -> Int -> IO ()
+deleteGroupD dbPath groupId = do
+    conn <- connectSqlite3 dbPath
+    _ <- run conn "DELETE FROM tasks_table WHERE group_id = ?" [toSql groupId] 
+    _ <- run conn "DELETE FROM group_table WHERE id = ?" [toSql groupId]
     commit conn
     disconnect conn
 
 -- Delete a task in the database
-deleteTask :: FilePath -> Int -> IO ()
-deleteTask dbPath taskId = do
+deleteTaskD :: FilePath -> Int -> IO ()
+deleteTaskD dbPath taskId = do
     conn <- connectSqlite3 dbPath
     run conn "DELETE FROM tasks_table WHERE id = ?" [toSql taskId]
     commit conn
     disconnect conn
 
 -- Fetch all groups
-fetchGroups :: FilePath -> IO [(Int, String)]
-fetchGroups dbPath = do
+fetchGroupsD :: FilePath -> IO [(Int, String)]
+fetchGroupsD dbPath = do
     conn <- connectSqlite3 dbPath
     res <- quickQuery' conn "SELECT id, group_name FROM group_table" []
     disconnect conn
     return $ map (\[sqlId, sqlName] -> (fromSql sqlId, fromSql sqlName)) res
 
+-- Fetches a group's ID by its name
+fetchGroupIdByNameD :: FilePath -> String -> IO (Int)
+fetchGroupIdByNameD dbPath groupName = do
+    conn <- connectSqlite3 dbPath
+    res <- quickQuery' conn "SELECT id FROM group_table WHERE group_name = ? LIMIT 1" [toSql groupName]
+    disconnect conn
+    return $ case res of
+        [[sqlId]] -> Just (fromSql sqlId)
+        _ -> Nothing
+
 -- Fetch all tasks
-fetchTasks :: FilePath -> IO [(Int, String, String, Int)]
-fetchTasks dbPath = do
+fetchTasksD :: FilePath -> IO [(Int, String, String, Int)]
+fetchTasksD dbPath = do
     conn <- connectSqlite3 dbPath
     res <- quickQuery' conn "SELECT id, task_name, task_description, group_id FROM tasks_table" []
     disconnect conn
     return $ map (\[sqlId, sqlName, sqlDesc, sqlGroupId] -> (fromSql sqlId, fromSql sqlName, fromSql sqlDesc, fromSql sqlGroupId)) res
+
+fetchTaskIdByNameD :: FilePath -> String -> IO (Maybe Int)
+fetchTaskIdByNameD dbPath taskName = do
+    conn <- connectSqlite3 dbPath
+    res <- quickQuery' conn "SELECT id FROM tasks_table WHERE task_name = ? LIMIT 1" [toSql taskName]
+    disconnect conn
+    return $ case res of
+        [[sqlId]] -> Just (fromSql sqlId)  
+        _ -> Nothing  
