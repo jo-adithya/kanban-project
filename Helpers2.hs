@@ -16,12 +16,21 @@ import Utils (deleteListAtIndex, getUserAction, getUserInput, updateListAtIndex)
 -- returns the updated state.
 --
 -- Args:
---   state: The current state.
+--   state: The current state. (Requires the state to match the records in the DB)
 --
 -- Returns:
 --   The updated state after creating a new group.
 --
 -- Example (1):
+-- >>> createGroup (State [] [])
+-- Creating a new group
+-- -------------------
+-- Enter the name of the group: Group 1
+-- Group created successfully!
+-- Returns State {groups = [Group "Group 1"], tasks = []}
+--
+--
+-- Example (2):
 -- >>> createGroup (State [Group "Group 1"] [])
 -- Creating a new group
 -- -------------------
@@ -32,14 +41,8 @@ import Utils (deleteListAtIndex, getUserAction, getUserInput, updateListAtIndex)
 -- -------------------
 -- Enter the name of the group: Group 2
 -- Group created successfully!
+-- Returns State {groups = [Group "Group 1", Group "Group 2"], tasks = []}
 --
--- Example (2):
--- >>> createGroup (State [] [])
--- Creating a new group
--- -------------------
--- Enter the name of the group: Group 1
--- Group created successfully!
--- 
 -- 
 -- User Input Format:
 -- Desired name of the task group
@@ -67,7 +70,7 @@ createGroup (State groups tasks) = do
 -- The task is then inserted into the database and added to the state.
 --
 -- Args:
---   state: The current state.
+--   state: The current state. (Requires the state to match the records in the DB) 
 --
 -- Returns:
 --   The updated state after creating a new task.
@@ -75,6 +78,7 @@ createGroup (State groups tasks) = do
 -- Example (1):
 -- >>> createTask (State [] [])
 -- No groups found. Please create a group first.
+-- Returns: State {groups = [], tasks = []}
 --
 -- Example (2):
 -- >>> createTask (State [Group "Group 1"] [])
@@ -87,6 +91,7 @@ createGroup (State groups tasks) = do
 --   (1) Group 1
 -- Choose an option (1): 1
 -- Task created successfully!
+-- Returns: State {groups = [Group "Group 1"], tasks = [Task "Task 1" "Task 1 description" (Group "Group 1")]}
 --
 -- Example (3):
 -- >>> createTask (State [Group "Group 1", Group "Group 2"] [])
@@ -100,6 +105,7 @@ createGroup (State groups tasks) = do
 --   (2) Group 2
 -- Choose an option (1-2): 2
 -- Task created successfully!
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 2" "Task 2 description" (Group "Group 2")]}
 --
 createTask :: State -> IO State
 createTask (State [] tasks) = do
@@ -148,6 +154,7 @@ createTask (State groups tasks) = do
 --   (1) Back
 --   (2) Exit
 -- Choose an option (1-2): 1
+-- Returns: State {groups = [], tasks = []}
 --
 -- Example (2):
 -- >>> viewAllTasks (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")])
@@ -157,6 +164,8 @@ createTask (State groups tasks) = do
 --   (2) Back
 --   (3) Exit
 -- Choose an option (1-3): 1
+-- ** Calls viewTask **
+-- Returns the updated state after viewing/editing the task.
 --
 -- Example (3):
 -- >>> viewAllTasks (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")])
@@ -167,6 +176,8 @@ createTask (State groups tasks) = do
 --   (3) Back
 --   (4) Exit
 -- Choose an option (1-4): 2
+-- ** Calls viewTask **
+-- Returns the updated state after viewing/editing the task.
 --
 viewAllTasks :: State -> IO State
 viewAllTasks (State groups []) = do
@@ -227,6 +238,8 @@ viewAllTasks state = do
 --   (5) Back
 --   (6) Exit
 -- Choose an option (1-6): 5
+-- ** Calls the appropriate helper function **
+-- Returns the updated state after viewing/editing the task.
 --
 -- Example (2):
 -- >>> viewTask (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]) 2
@@ -245,6 +258,8 @@ viewAllTasks state = do
 --   (5) Back
 --   (6) Exit
 -- Choose an option (1-6): 6
+-- ** Calls the appropriate helper function **
+-- Returns the updated state after viewing/editing the task.
 --
 viewTask :: State -> Int -> IO State
 viewTask state index = do
@@ -278,32 +293,34 @@ viewTask state index = do
 -- Otherwise, return the original state.
 --
 -- Args:
---   state: The current state.
+--   state: The current state. (Requires the state to match the records in the DB)
 --   task: The task to update.
 --   index: The index of the task in the task list.
 --
 -- Returns:
 --   The updated state if the task is found in the database, otherwise the original state.
 --
--- Example (1):
+-- Example (1): (Assuming the task is in the database)
 -- >>> changeTitle (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
 -- Changing the title of the task
 -- ------------------------------
 -- Enter the new title of the task: Task 2
 -- Title changed successfully!
-
--- Example (2):
+-- Returns: State {groups = [Group "Group 1"], tasks = [Task "Task 2" "Task 1 description" (Group "Group 1")]}
+--
+-- Example (2): (Assuming the task is not in the database)
 -- >>> changeTitle (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
 -- Changing the title of the task
 -- ------------------------------
 -- Enter the new title of the task: Task 2
 -- Title changed successfully!
 --
--- >>> changeTitle (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
+-- >>> changeTitle (State [Group "Group 1"] [Task "Task 2" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
 -- Changing the title of the task
 -- ------------------------------
--- Enter the new title of the task: Task 2
+-- Enter the new title of the task: Task 3
 -- Failed to find the task in the database.
+-- Returns: State {groups = [Group "Group 1"], tasks = [Task "Task 2" "Task 1 description" (Group "Group 1")]}
 --
 changeTitle :: State -> Task -> Int -> IO State
 changeTitle state task index = do
@@ -336,28 +353,30 @@ changeTitle state task index = do
 -- If the task is not found, an error message is displayed and the original state is returned.
 --
 -- Args:
---   state: The current state.
+--   state: The current state. (Requires the state to match the records in the DB)
 --   task: The task to update.
 --   index: The index of the task in the task list.
 --
 -- Returns:
 --   The updated state if the task is found in the database, otherwise the original state.
 --
--- Example (1):
--- >>> changeDescription (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
+-- Example (1): (Assuming the task is in the database)
+-- >>> changeDescription (State [Group "Group 1"] [Task "Task 2" "Task 1 description" (Group "Group 1")]) (Task "Task 2" "Task 1 description" (Group "Group 1")) 1
 -- Changing the description of the task
 -- ------------------------------
 -- Enter the new description of the task: 
--- Task 1 new description
+-- Task 2 new description
 -- Description changed successfully!
+-- Returns: State {groups = [Group "Group 1"], tasks = [Task "Task 2" "Task 2 new description" (Group "Group 1")]}
 
--- Example (2):
--- >>> changeDescription (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 2" "Task 1 description" (Group "Group 1")) 1
+-- Example (2): (Assuming the task is not in the database)
+-- >>> changeDescription (State [Group "Group 1"] [Task "Task 2" "Task 2 new description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
 -- Changing the description of the task
 -- ------------------------------
 -- Enter the new description of the task: 
 -- Task 1 new description
 -- Failed to find the task in the database.
+-- Returns: State {groups = [Group "Group 1"], tasks = [Task "Task 2" "Task 2 new description" (Group "Group 1")]}
 --
 changeDescription :: State -> Task -> Int -> IO State
 changeDescription state task index = do
@@ -394,7 +413,7 @@ changeDescription state task index = do
 --   The updated state after changing the group of the task.
 --
 -- Example (1):
--- >>> changeGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 1" "Task 1 description" (Group "Group 1")) 1
+-- >>> changeGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 2" "Task 2 new description" (Group "Group 1")]) (Task "Task 2" "Task 2 new description" (Group "Group 1")) 1
 -- Changing the group of the task
 -- ------------------------------
 -- Which group do you want to move the task to?
@@ -402,9 +421,10 @@ changeDescription state task index = do
 --   (2) Group 2
 -- Choose an option (1-2): 2
 -- Group changed successfully!
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 2" "Task 2 new description" (Group "Group 2")]}
 --
 -- Example (2):
--- >>> changeGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) (Task "Task 4" "Task 1 description" (Group "Group 1")) 1
+-- >>> changeGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 2" "Task 2 new description" (Group "Group 2")]) (Task "Task 4" "Task 1 description" (Group "Group 1")) 1
 -- Changing the group of the task
 -- ------------------------------
 -- Which group do you want to move the task to?
@@ -412,6 +432,7 @@ changeDescription state task index = do
 --   (2) Group 2
 -- Choose an option (1-2): 2
 -- Failed to find the task in the database.
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 2" "Task 2 new description" (Group "Group 2")]}
 --
 changeGroup :: State -> Task -> Int -> IO State
 changeGroup state task index = do
@@ -457,16 +478,18 @@ changeGroup state task index = do
 --  the updated state after deleting the task.
 
 -- Example (1)
--- deleteTask (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")]) 1
+-- deleteTask (State [Group "Group 1", Group "Group 2"] [Task "Task 2" "Task 2 new description" (Group "Group 2")]) 1
 -- Deleting a task
 -- ----------------
 -- Task deleted successfully!
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = []}
 --
 -- Example (2) -- Assume that the state doesn't matches the database
 -- deleteTask (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]) 1
 -- Deleting a task
 -- ----------------
 -- Failed to find the task in the database.
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]}
 --
 deleteTask :: State -> Int -> IO State
 deleteTask state index = do
@@ -505,14 +528,14 @@ deleteTask state index = do
 -- Deleting a group
 -- ----------------
 -- Group and its tasks deleted successfully!
---
--- Returns: State [] []
+-- Returns: State {groups = [], tasks = []}
 --
 -- Example (2) -- Assume that the state doesn't matches the database
 -- deleteGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]) 1
 -- Deleting a group
 -- ----------------
 -- Failed to find the group in the database.
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]}
 --
 deleteGroup :: State -> Int -> IO State
 deleteGroup state index = do
@@ -548,6 +571,7 @@ deleteGroup state index = do
 -- Example (1):
 -- >>> viewAllGroups (State [] [])
 -- No groups found. Please create a group first.
+-- Returns: State {groups = [], tasks = []}
 --
 -- Example (2):
 -- >>> viewAllGroups (State [Group "Group 1"] [Task "Task 1" "Task 1 description" (Group "Group 1")])
@@ -557,6 +581,7 @@ deleteGroup state index = do
 --   (1) Group 1
 -- Choose an option (1): 1
 -- ** Calls viewAllTasksByGroup **
+-- Returns the updated state after viewing all tasks in the selected group.
 --
 -- Example (3):
 -- >>> viewAllGroups (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")])
@@ -567,6 +592,7 @@ deleteGroup state index = do
 --   (2) Group 2
 -- Choose an option (1-2): 2
 -- ** Calls viewAllTasksByGroup **
+-- Returns the updated state after viewing all tasks in the selected group.
 --
 viewAllGroups :: State -> IO State
 viewAllGroups (State [] tasks) = do
@@ -603,6 +629,7 @@ viewAllGroups state = do
 --   (3) Exit
 -- Choose an option (1-3): 1
 -- ** Calls viewTask **
+-- Returns the updated state after viewing/editing the task.
 --
 -- Example (2):
 -- >>> viewAllTasksByGroup (State [Group "Group 1"] []) (Group "Group 1")
@@ -614,6 +641,7 @@ viewAllGroups state = do
 --   (1) Back
 --   (2) Exit
 -- Choose an option (1-2): 1
+-- Returns: State {groups = [Group "Group 1"], tasks = []}
 --
 -- Example (3):
 -- >>> viewAllTasksByGroup (State [Group "Group 1", Group "Group 2"] [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]) (Group "Group 2")
@@ -623,6 +651,7 @@ viewAllGroups state = do
 --   (2) Back
 --   (3) Exit
 -- Choose an option (1-3): 2
+-- Returns: State {groups = [Group "Group 1", Group "Group 2"], tasks = [Task "Task 1" "Task 1 description" (Group "Group 1"), Task "Task 2" "Task 2 description" (Group "Group 2")]}
 --
 viewAllTasksByGroup :: State -> Group -> IO State
 viewAllTasksByGroup state selectedGroup = do
